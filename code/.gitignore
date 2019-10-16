@@ -1,0 +1,6 @@
+ODE/errors/temp/*
+
+*.pyc
+*.eps
+*.png
+*.pvtu
