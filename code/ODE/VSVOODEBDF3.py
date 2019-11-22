@@ -1,11 +1,5 @@
 """
-This is a fully coupled, fully implicity Backward Euler Code to solve NSE in a periodic box with an exact solution.
-
-An exact solution to the Taylor Green Vortex in 2D is given by
-u = (F(t)cos(x)sin(y), -F(t)cos(y)sin(x))
-p = -(1/4)F(t)^2 (cos(2x) + cos(2y))
-
-No boundary conditions because periodic domain.
+A modular, ODE version of MOOSE234 for solving first order systems of ODEs.
 """
 
 from __future__ import print_function
@@ -24,29 +18,43 @@ import timefilters as tf
 
 import argparse
 from subprocess import check_output
-#------------------------------------ CONSOLE INPUT --------------------------------------------------
+#------------------------------------ CONSOLE INPUT ------------------------------------------------
 
-parser = argparse.ArgumentParser(description='An implementation of the Embedded VSVO Backward Euler method \
-	tested on a periodic domain with an exact quasi periodic solution.')
+parser = argparse.ArgumentParser(description='An implementation of the Embedded VSVO Backward Euler\
+   method tested on a periodic domain with an exact quasi periodic solution.')
 
-parser.add_argument('-f','--filters', help ="Run the test using up to the filter number specified by \
-	this argument. An input of 0 is unmodified Backward Euler. The default selection is\
-	4, which allows for the calculation of the estimator of the fourth order method.", type = int,default = 4)
-parser.add_argument('--pressure', help ="Enabling this option will also apply time filters to the pressure of the same order specified in -f.",action="store_true")
-parser.add_argument('-o','--output', help ="The file name for the text file containing the errors with respect to delta t. Default file name is date-time.txt",type =str, default = "errors/temp/" + str(check_output(['date','+%Y-%m-%d_%R:%S'])).strip()+".txt")
-parser.add_argument('-t','--tolerance', help ="The tolerance used to adapt the step size. Right now, it is just based on error committed per time step, but can be made more sophisticated later.",type =np.float64, default = 1e-3)
-parser.add_argument('-r','--ratio', help ="The maximum step size ratio allowed, where step size ratio is (step size at time n divided by step size at time n minus 1) The default value is 2.",type =np.float64, default = 2)
-parser.add_argument('--constant', help ="Enabling this will disable adaptivity altogether.",action="store_true")
-parser.add_argument('-k','--startingStepSize', help ="The initial step size taken.",type =np.float64, default = 0.000001)
-parser.add_argument('--forcefilter', help ="Forces the exclusive use of the filter passed to argument f.",action="store_true")
-parser.add_argument('-p','--problem', help ="The name of a user created python module that contains \
-all the information necessary to run a specific test problem, including mesh, boundary conditions,\
-					body forces, exact solutions, etc. There is a certain syntax that I need\
-					to specify eventually. ",type =str, default = 'quasi_periodic_problem')
+parser.add_argument('-f','--filters', help ="Run the test using up to the filter number specified\
+    by this argument. An input of 0 is unmodified Backward Euler. The default selection is\
+	4, which allows for the calculation of the estimator of the fourth order method.",\
+    type = int,default = 4)
+parser.add_argument('-o','--output', help ="The file name for the text file containing the errors \
+	                with respect to delta t. Default file name is date-time.txt",\
+	                type =str, default = "errors/temp/" + \
+	                str(check_output(['date','+%Y-%m-%d_%R:%S'])).strip()+".txt")
+parser.add_argument('-t','--tolerance', help ="The tolerance used to adapt the step size. Right now\
+	                , it is just based on error committed per time step, but can be made more \
+	                sophisticated later.",\
+	                type =np.float64, default = 1e-3)
+parser.add_argument('-r','--ratio', help ="The maximum step size ratio allowed, where step size\
+                    ratio is (step size at time n divided by step size at time n minus 1) \
+                    The default value is 2.",type =np.float64, default = 2)
+parser.add_argument('--constant', help ="Enabling this will disable adaptivity altogether.",\
+	                action="store_true")
+parser.add_argument('-k','--startingStepSize', help ="The initial step size taken.",\
+	                type =np.float64, default = 0.000001)
+parser.add_argument('--forcefilter',\
+                    help ="Forces the exclusive use of the filter passed to argument f.",\
+                    action="store_true")
+parser.add_argument('-p','--problem', help ="The name of a user created python module that contains\
+                    all the information necessary to run a specific test problem, including mesh, \
+                    boundary conditions, body forces, exact solutions, etc. There is a certain \
+                    syntax that I need\
+					to specify eventually. ",type =str, default = 'butcherOde')
 parser.add_argument('--bdforder', help ="The order of the bdf_method", type = int,default = 3)
 
-parser.add_argument('--vo', help ="Which orders to use, such as 2, 23, 3, 34, 234", type = int,default = 3)
-
+parser.add_argument('--vo', help ="Which orders to use, such as 2, 23, 3, 34, 234",\
+                    type = int,default = 3)
+#----------------------------------- PARSING THE CONSOLE INPUT -------------------------------------
 args = parser.parse_args()
 
 orders_to_use = args.vo
@@ -56,11 +64,7 @@ exec('from '+str(args.problem) +' import *')
 
 print("Using filter number "+ str(args.filters))
 filtersToUse = args.filters
-if(args.pressure):
-	print("Also filtering pressue.")
 	
-filterPressure = args.pressure
-
 constantStepSize = args.constant
 if(constantStepSize):
 	print("Constant step size of " +str(args.startingStepSize)+ ". Adaptivity is turned off.")
@@ -73,7 +77,7 @@ maxRatio = args.ratio
 
 forcefilter = args.forcefilter
 
-#If exact solution comes from data
+#If exact solution comes from data. Move this function to it's own module later.
 
 def getData(filename):
 
@@ -113,7 +117,7 @@ minStepSize = 1e-15
 
 errorfName = args.output
 errorfile = open(errorfName, 'w')
-output = "T final =" + str(T) +", Filters Used "+ str(filtersToUse) + str(filterPressure) +'\n'
+output = "T final =" + str(T) +", Filters Used "+ str(filtersToUse) +'\n'
 errorfile.write(output)
 
 #Start dt loop
@@ -139,10 +143,6 @@ if(numerical_data):
 	t=Ts[total_num_steps]
 	dt = Ts[total_num_steps] - Ts[total_num_steps-1]
 
-# Define variational problem
-#f = f(t)
-
-
 #Initial Conditions
 
 print(Ts)
@@ -154,13 +154,10 @@ if(numerical_data):
 	u_n = np.array([np.array([y_data[j]]).transpose() for j in xrange(total_num_times)])
 
 
-
-
-#Initialize temporal errors
-l2L2_error = 0
-l2L2 = 0
-
-
+#####  INITIALIZE ERROR QUANTITIES ####
+l2L2_error = 0                        #
+l2L2       = 0                        #                   
+#######################################
 
 #initialize temp solutions
 y_2 = exact(0)
@@ -188,6 +185,17 @@ J=1
 for j in range(total_num_steps):
 	Ts[j] = Ts[j+1]
 
+###########################################################
+#                                                         #
+#        LL         OOOOO      OOOOO     PPPPP            #
+#        LL        O     O    O     O    P    P           #
+#        LL        O     O    O     O    P    P           #
+#        LL        O     O    O     O    PPPPP            #
+#        LL        O     O    O     O    P                #
+#        LL        O     O    O     O    P                #
+#        LLLLLLLLL  OOOOO      OOOOO     P                #
+#                                                         #
+###########################################################
 
 while (tOld < T):
 	#dt = dt_fixed + 5./6*dt_fixed*np.sin(t)
@@ -200,32 +208,12 @@ while (tOld < T):
 	# Update current time
 	u_exact = exact(t)
 	
-	
-	"""
-	#Get new bdf coefficients
-	alpha = bdf.bdf_coefficients(Ts[total_num_times-bdf_num_times:len(Ts)])
-	
-	F =  lambda u :  alpha[bdf_order]*u +   np.sum(alpha[i]*u_n[i+1 + (total_num_times - bdf_num_times)] for i in xrange(bdf_order)) - f(t,u)
-	J = lambda u : alpha[bdf_order]*np.identity(u_n[0].size) - Jf(t,u)
-	test = u_exact -18./11*u_n[4] + 9./11*u_n[3] -2./11*u_n[2] - 6./11*dt*f(t,u_exact)
-	tol = 1e-5
-	maxIter = 50
-	y_3 = newton.newton(u_n[total_num_steps],F,J,tol,maxIter)
-	"""
-	
-	
 	#Get new bdf coefficients
 	[alpha,differences,eta] = bdf.bdf_coefficients_and_differences(Ts,bdf_order)
 	
-	
-	
-	
-	#print(differences)
-	#print(Ts)
-	#exit()
-	#print(alpha)
-	F =  lambda u :  alpha[total_num_steps]*u +   np.sum(alpha[i-1]*u_n[i] for i in xrange(1,total_num_times)) - f(t,u)
-	J_newton = lambda u : alpha[total_num_steps]*np.identity(u_n[0].size) - Jf(t,u)
+	F        =  lambda u :  alpha[total_num_steps]*u \
+	         +  np.sum(alpha[i-1]*u_n[i] for i in xrange(1,total_num_times))   - f(t,u)
+	J_newton =  lambda u :  alpha[total_num_steps]*np.identity(u_n[0].size)    - Jf(t,u)
 	
 
 	maxIter = 50
@@ -243,21 +231,16 @@ while (tOld < T):
 				*differences[3]/differences[3][total_num_steps]
 			"""
 			
-			time_filter = (filter_coefficients[total_num_steps]*y_3  + np.sum(filter_coefficients[i-1]*u_n[i] for i in xrange(1,total_num_times)) )
+			time_filter =(filter_coefficients[total_num_steps]*y_3  \
+				        +np.sum(filter_coefficients[i-1]*u_n[i] for i in xrange(1,total_num_times)))
 			EstVector[0] = linalg.norm(time_filter)
 			y_2 = y_3 + time_filter
 			
-			#down_filter = differences[3]/differences[3][total_num_steps]
-			#y_2 = y_3 + 9./125*( down_filter[total_num_steps]*y_3  + np.sum(down_filter[i-1]*u_n[i] for i in xrange(1,total_num_times)) )
-			#EstVector[0] = linalg.norm(9./125*( down_filter[total_num_steps]*y_3  + np.sum(down_filter[i-1]*u_n[i] for i in xrange(1,total_num_times)) ))
-		if(orders_to_use == 23 or orders_to_use == 3 or \
-				orders_to_use == 34 or orders_to_use == 234 or orders_to_use == 4 or orders_to_use == 24):
+		if(        orders_to_use == 23 or orders_to_use == 3 \
+				or orders_to_use == 34 or orders_to_use == 234\
+			    or orders_to_use == 4  or orders_to_use == 24):
 			#Construct the filter to go up an order
 			#higher_order_filter = eta*differences[4]
-	
-			#EstVector[1] = linalg.norm(higher_order_filter)
-			#y_4 = y_3 - (higher_order_filter[total_num_steps]*y_3 \
-			#	+ np.sum(higher_order_filter[i]*u_n[i+1] for i in xrange(total_num_times-1)))
 				
 			filter_coefficients = eta*differences[4]
 			time_filter = (filter_coefficients[total_num_steps]*y_3  \
@@ -266,7 +249,8 @@ while (tOld < T):
 				EstVector[1] = linalg.norm(time_filter)
 			y_4 = y_3 - time_filter
 			
-			if(not constantStepSize and (orders_to_use == 4 or orders_to_use == 34 or orders_to_use == 234 or orders_to_use == 24)):
+			if(not constantStepSize and (orders_to_use == 4   or orders_to_use == 34\
+			                        or   orders_to_use == 234 or orders_to_use == 24)):
 				#estimate LTE of 4th order method
 				#need coefficients for bdf4
 				[alpha,temp,temp] = bdf.bdf_coefficients_and_differences(Ts,bdf_order+1)
@@ -275,75 +259,15 @@ while (tOld < T):
 				Extrap = y_4
 				#The time filter replaced with the extrapolation of y
 				#is part of the error estimation
-				#time_filter = (filter_coefficients[total_num_steps]*Extrap  \
-				#+ np.sum(filter_coefficients[i-1]*u_n[i] for i in xrange(1,total_num_times)) )
-				
-				
-				#EstVector[2] = linalg.norm((alpha[total_num_steps]*Extrap +   np.sum(alpha[i-1]*u_n[i] for i in xrange(1,total_num_times)) - f(t,Extrap) \
-				#	+np.dot(Jf(t,Extrap),time_filter/(1-eta*differences[4][total_num_steps])))/alpha[total_num_steps]) #This last thing normalizes the error
-				
+
 				Est_3 = y_4-y_3
-
-				#EstVector[2] = linalg.norm((alpha[total_num_steps]*Extrap +   np.sum(alpha[i-1]*u_n[i] for i in xrange(1,total_num_times)) - f(t,Extrap) \
-				#	-np.dot(Jf(t,Extrap),Est_3))/alpha[total_num_steps])
 					
-				EstVector[2] = linalg.norm((alpha[total_num_steps]*Extrap +   np.sum(alpha[i-1]*u_n[i] for i in xrange(1,total_num_times)) - f(t,Extrap))/alpha[total_num_steps])
+				EstVector[2] = linalg.norm((alpha[total_num_steps]*Extrap +\
+				    np.sum(alpha[i-1]*u_n[i] for i in xrange(1,total_num_times))\
+				    - f(t,Extrap))/alpha[total_num_steps])
 
-				#print(EstVector)
-				#exit()
-				
-			
-			
-
-	"""
-		
-	
-	#down_filter = differences[3]/differences[3][total_num_steps]
-	#y_3 = y_3 + 9./125*( down_filter[total_num_steps]*y_3  + np.sum(down_filter[i-1]*u_n[i] for i in xrange(1,total_num_times)) )
-	
-	#Filter up an order
-	#y_3 = y_3 - eta*(differences[4][4]*y_3 + np.sum(differences[4][i]*u_n[i+1] for i in xrange(total_num_times-1)))
-	#y_3 = y_3 -eta*()
-	
-	#exit()
-	
-
-
-
-	#y_1 = bdf3.bdf3_step([u_nM2,u_nM1,u_n],K[4],t,f,Jf,newton_tol,maxIter)
-	
-	#FILTER STEPS
-	#Create Vectorized version of u for the timefilters module
-	#UVectorized = [u_nM4, u_nM3, u_nM2, u_nM1, u_n, y_1]
-	
-	#First filter (A-stable)
-	if(filtersToUse >=1):
-		#[y_2,est] = tf.filter(1,K,UVectorized)
-		#EstVector[0] = linalg.norm(est)
-		#UVectorized[5] = y_2
-		#Now the second filter
-		y_2 = y_1 - 3./25*(y_1 - 4*u_n+6*u_nM1 - 4*u_nM2+u_nM3)
-		if(filtersToUse >=2):
-			[y_3,est] = tf.filter(2,K,UVectorized)
-			EstVector[1] = linalg.norm(est)
-			
-			
-			#EXTRA STEP
-			
-			#y_3 = 7./3*y_3 -7./2*u_n + 3*u_nM1 - 5./6*u_nM2;
-			UVectorized[5] = y_3
-			#Third Filter
-			if(filtersToUse>=3):
-				[y_4,est] = tf.filter(3,K,UVectorized)
-				EstVector[2] = linalg.norm(est)
-				UVectorized[5] = y_4
-				#Fourth
-				if(filtersToUse >= 4):
-					[junk,est] = tf.filter(4,K,UVectorized)
-					EstVector[3] = linalg.norm(est)
-				
-	"""
-	#The line below is a hacky way to exclude solutions that don't satisfy the tolerance from consideration for picking the next step size.
+	#The line below is a hacky way to exclude solutions that don't satisfy the tolerance from 
+	#consideration for picking the next step size.
 	if not constantStepSize:
 		TempEstVector = EstVector + ~(EstVector< tolerance)*1e20
 		[knp1,J] = tf.pickSolutionMaxK(TempEstVector,tolerance,dt,safetyFactor,[2,3,4])
@@ -372,10 +296,7 @@ while (tOld < T):
 		else:
 			u_ = y_4
 		print("dt "+str(dt))
-		#For Testing
 		#Calculate Error
-		#u_avg = 7./3*y_3 -7./2*u_n + 3*u_nM1 - 5./6*u_nM2;
-		#L2_error = linalg.norm(u_avg - u_exact)
 		L2_error = linalg.norm(u_ - u_exact)
 
 		#Update Temporal Error
@@ -406,14 +327,7 @@ while (tOld < T):
 			u_n[j] = u_n[j+1]
 		u_n[total_num_steps] = u_
 		
-		
-		
-
-		#print(K)
-		
 		#Update times and solution
-		
-		#dt = dt*1.1
 		
 		tOld += dt
 		
@@ -431,7 +345,18 @@ while (tOld < T):
 		k = dt
 		numOfFailures += 1
 		#exit()
-	
+
+##################################################################################
+#                                                                                #
+#    EEEEEEEE  N     N   DDDDD          L         OOOOO      OOOOO     PPPPP     #                  
+#    E         NN    N   D    D         L        O     O    O     O    P    P    #  
+#    E         N N   N   D     D        L        O     O    O     O    P    P    # 
+#    EEEEEEEE  N  N  N   D     D        L        O     O    O     O    PPPPP     #           
+#    E         N   N N   D     D        L        O     O    O     O    P         #
+#    E         N    NN   D    D         L        O     O    O     O    P         # 
+#    EEEEEEEE  N     N   DDDDD          LLLLLLLL  OOOOO      OOOOO     P         #  
+#                                                                                #                     
+################################################################################## 	
 
 final_error=L2_error
 if(numerical_data):
@@ -445,14 +370,18 @@ if(numerical_data):
 
 
 #Calculate final errors
-errorfile.write("\nEND\ntolerance, l2L2 error, l2H1 error, l2L2 Pressure error, Number Of Rejections, Starting Step Size,final error")
+errorfile.write("\nEND\ntolerance, l2L2 error, l2H1 error, l2L2 Pressure error, \
+	Number Of Rejections, Starting Step Size,final error")
 relative_l2L2_error = np.sqrt(l2L2_error)/np.sqrt(l2L2)
 relative_l2L2_error_pressure = 11111
 relative_l2H1_error = 1111
 print("l2L2 error:",relative_l2L2_error)
 
 #Calculate final errors
-output = "\n" + str(tolerance) + "," + str(relative_l2L2_error) + "," +str(relative_l2H1_error)  + "," + str(relative_l2L2_error_pressure)+ "," + str(numOfFailures) + "," + str(args.startingStepSize) + "," + str(final_error)
+output = "\n" + str(tolerance)       + "," + str(relative_l2L2_error)          + "," \
+       + str(relative_l2H1_error)    + "," + str(relative_l2L2_error_pressure) + "," \
+       + str(numOfFailures)          + "," + str(args.startingStepSize)        + "," \
+       + str(final_error)
 errorfile.write(output)
 errorfile.close()
 

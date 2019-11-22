@@ -5,7 +5,7 @@ python_script='VSVOODEBDF3.py'
 #python_script='VSVOBDF3_old.py'
 
 let order=2
-for vo in   234 34 4 # 24 # 2 3 23
+for vo in  2 3 # 234 34 4 # 24 # 2 3 23
 	do
 	for tol_exponent in  {4..11}
 #	for tol_exponent in  {12..18}

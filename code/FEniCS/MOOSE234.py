@@ -50,7 +50,7 @@ parser.add_argument('--forcefilter', help ="Forces the exclusive use of the filt
 parser.add_argument('-p','--problem', help ="The name of a user created python module that contains \
 all the information necessary to run a specific test problem, including mesh, boundary conditions,\
 					body forces, exact solutions, etc. There is a certain syntax that I need\
-					to specify eventually. ",type =str, default = 'quasi_periodic_problem')
+					to specify eventually. ",type =str, default = 'taylor_green_problem')
 parser.add_argument('--bdforder', help ="The order of the bdf_method", type = int,default = 3)
 
 parser.add_argument('--paraview', help ="Output name for pvd and vtu files",type =str, default = "pvd/tmp")
@@ -279,18 +279,21 @@ def b(u,v,w):
 for j in range(total_num_steps):
 	Ts[j] = Ts[j+1]
 
-#Initialize error quanities
-exact_vel_norm_sq = 0
-L2_error = 0
-
-l2L2_error = 0
-l2L2 = 0
-l2L2_error_pressure = 0
-l2L2_pressure = 0
-l2H1 = 0
-l2H1_error = 0
-
-
+#####  INITIALIZE ERROR QUANTITIES ####
+L2_error = 0                          #
+                                      #
+l2L2_error = 0                        #
+l2L2 = 0                              #
+l2L2_error_pressure = 0               #
+l2L2_pressure = 0                     #
+l2H1 = 0                              #
+l2H1_error = 0                        #
+                                      #
+exact_vel_norm_sq = 0                 #
+exact_pres_norm_sq = 0                #
+p_L2_error = 0                        #
+total_error_time = 0                  #
+#######################################
 
 step_counter = 0
 
@@ -309,6 +312,18 @@ solverEst.set_operator(A_Gateux)
 
 #print(info(LinearVariationalSolver.default_parameters(), True))
 loop_timer = timer_python.time()
+
+###########################################################
+#                                                         #
+#        LL         OOOOO      OOOOO     PPPPP            #
+#        LL        O     O    O     O    P    P           #
+#        LL        O     O    O     O    P    P           #
+#        LL        O     O    O     O    PPPPP            #
+#        LL        O     O    O     O    P                #
+#        LL        O     O    O     O    P                #
+#        LLLLLLLLL  OOOOO      OOOOO     P                #
+#                                                         #
+###########################################################
 
 while (tOld < T-1e-15):
 	if(mpiRank == 0):
@@ -606,6 +621,18 @@ while (tOld < T-1e-15):
 		#Force all simulations to end at the same time
 		knp1 = np.min([knp1,T-t])
 		#exit()
+	
+##################################################################################
+#                                                                                #
+#    EEEEEEEE  N     N   DDDDD          L         OOOOO      OOOOO     PPPPP     #                  
+#    E         NN    N   D    D         L        O     O    O     O    P    P    #  
+#    E         N N   N   D     D        L        O     O    O     O    P    P    # 
+#    EEEEEEEE  N  N  N   D     D        L        O     O    O     O    PPPPP     #           
+#    E         N   N N   D     D        L        O     O    O     O    P         #
+#    E         N    NN   D    D         L        O     O    O     O    P         # 
+#    EEEEEEEE  N     N   DDDDD          LLLLLLLL  OOOOO      OOOOO     P         #  
+#                                                                                #                     
+################################################################################## 
 	
 elapsed_time = timer_python.time()-loop_timer
 print("Main loop took ",elapsed_time ," seconds.")

@@ -113,9 +113,9 @@ plt.loglog(work,final_error,'r:',marker = 'v',label = '2')
 [counter,tol,l2L2,l2H1,l2L2Pressure,rejections,final_error] = compileErrors('-order-3.txt',lower_tol,upper_tol)
 work = counter + rejections
 plt.loglog(work,final_error,'b--',marker = 'o', label ='3')
-[counter,tol,l2L2,l2H1,l2L2Pressure,rejections,final_error] = compileErrors('-order-23.txt',lower_tol,upper_tol)
-work = counter + rejections
-plt.loglog(work,final_error,'g-.',marker = 's',label ='23')
+#[counter,tol,l2L2,l2H1,l2L2Pressure,rejections,final_error] = compileErrors('-order-23.txt',lower_tol,upper_tol)
+#work = counter + rejections
+#plt.loglog(work,final_error,'g-.',marker = 's',label ='23')
 
 [counter,tol,l2L2,l2H1,l2L2Pressure,rejections,final_error] = compileErrors('-order-4.txt',-11,-6)
 work = counter + rejections
