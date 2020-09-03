@@ -1,4 +1,4 @@
-ODE/errors/temp/*
+#ODE/errors/temp/*
 
 *.pyc
 *.eps
