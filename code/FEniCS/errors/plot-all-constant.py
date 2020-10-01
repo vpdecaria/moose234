@@ -20,7 +20,8 @@ def getData(filename):
 	l2L2 = np.zeros_like(dt)
 	l2H1 = np.zeros_like(dt)
 	l2L2Pressure = np.zeros_like(dt)
-	PressureMax = np.zeros_like(dt)
+	VelLast = np.zeros_like(dt)
+	PreLast = np.zeros_like(dt)
 
 	for j,line in enumerate(f):
 		data = line.strip().split(',')
@@ -29,12 +30,13 @@ def getData(filename):
 		l2L2[j] = data[1]
 		l2H1[j] = data[2]
 		l2L2Pressure[j] = data[3]
-		PressureMax[j]=data[4]
+		VelLast[j]=data[4]
+		PreLast[j]=data[5]
 
 
 
 	f.close()
-	return [dt,l2L2,l2H1,l2L2Pressure,PressureMax]
+	return [dt,l2L2,l2H1,l2L2Pressure,VelLast,PreLast]
 
 #Plotting Method
 
@@ -58,22 +60,30 @@ def plotCompareMethods(dt, methodData,xLabel,yLabel,title,lineType,labels,marker
 	#plt.xlim([50e-4,dt[0]+0.02])
 	#plt.ylim([1e-6,1.7e-1])
 	x_l=0.00625
-	x_u=0.2
+	x_u=x_l * 4
+
+	vel = False
+	c = .5 if vel else .8;
+
 	
 	#Uncomment for velocity
 	#plt.loglog([x_l,x_u],[.5*x_l**2,.5*x_u**2],'k--',label = 'slope 2')
 	#Uncomment for pressure
-	plt.loglog([x_l,x_u],[.15*x_l**2,.15*x_u**2],'k--',label = 'slope 2')
+	plt.loglog([x_l,x_u],[c*x_l**2,c*x_u**2],'k:')
 	#Uncomment for velocity
-	#plt.loglog([x_l,x_u],[x_l**3,x_u**3],'k-.',label = 'slope 3')
 	x_l=0.00625
-	x_u=0.05
+	x_u=x_l * 4
+
+	c = 2 if vel else 3;
+	plt.loglog([x_l,x_u],[c*x_l**3,c*x_u**3],'k--')
+
+
+	c = 5 if vel else 15;
 
 	#plt.loglog([x_l,x_u],[x_l**3,x_u**3],'k-.',label = 'slope 3')
-	x_l=0.00625
-	x_u=0.2
-	plt.loglog([x_l,x_u],[3*x_l**4,3*x_u**4],'k:',label = 'slope 4')
-	plt.legend(loc = 4)
+
+	plt.loglog([x_l,x_u],[c*x_l**4,c*x_u**4],'k-.')
+	plt.legend(loc = 4,fontsize = 14)
 	
 	
 	
@@ -81,72 +91,27 @@ def plotCompareMethods(dt, methodData,xLabel,yLabel,title,lineType,labels,marker
 	plt.show()
 	
 
-[dt,l2L20,l2H10,l2L20Pressure,PMAX2] = getData('convergenceTestOrder2/order-2.txt')	
-[dt3,l2L203,l2H103,l2L20Pressure3,PMAX3] = getData('convergenceTestOrder3/order-3.txt')	
-[dt4,l2L204,l2H104,l2L20Pressure4,PMAX4] = getData('convergenceTestOrder4/order-4.txt')
+[dt,l2L20,l2H10,l2L20Pressure,VLAST2,PLAST2] = getData('convergenceTestOrder2/order-2.txt')	
+[dt3,l2L203,l2H103,l2L20Pressure3,VLAST3,PLAST3] = getData('convergenceTestOrder3/order-3.txt')	
+[dt4,l2L204,l2H104,l2L20Pressure4,VLAST4,PLAST4] = getData('convergenceTestOrder4/order-4.txt')
 
-
-#l2L2
-print(dt)
-slopel2L20 = stats.linregress(np.log(dt),np.log(l2L20))[0]
-slopel2L203 = stats.linregress(np.log(dt3),np.log(l2L203))[0]
-slopel2L204 = stats.linregress(np.log(dt4),np.log(l2L204))[0]
-
-xLabel = r'$k$'
 xLabel = r'$\Delta t$'
-yLabel = r'$\|u-u_h\|_{l2L2}/\|u\|_{l2L2}$'
+yLabel = 'final relative error'
 #title = r'Velocity Error'
 title='Nonadaptive Velocity Error'
-#lineType = ['k','k--','k-.','k.-']
-lineType = []
-lineType = ['k','b','g','r.-']
-lineType = ['k','b','r','k']
-markers = ['v','o','s','^']
-legend= ['BDF3-Stab, m = '+'{0:.3f}'.format(slopel2L20),\
-		'BDF3, m = '+'{0:.3f}'.format(slopel2L203),\
-		'BDF3-4, m = '+'{0:.3f}'.format(slopel2L204)]
-legend= ['BDF3-Stab',\
-		'BDF3',\
-		'FBDF4']
-plotCompareMethods(dt,[l2L20,l2L203,l2L204],xLabel,yLabel,title,lineType,legend,markers)
 
+#plotCompareMethods(dt,[l2L20,l2L203,l2L204],xLabel,yLabel,title,lineType,legend,markers)
 
-#l2L2 pressure
-slopel2L20 = stats.linregress(np.log(dt),np.log(l2L20Pressure))[0]
-slopel2L203 = stats.linregress(np.log(dt3),np.log(l2L20Pressure3))[0]
-slopel2L204 = stats.linregress(np.log(dt4),np.log(l2L20Pressure4))[0]
-
-
-xLabel = r'k'
-xLabel = r'$\Delta t$'
-yLabel = r'$\|p-p_h\|_{l2L2}/\|p\|_{l2L2}$'
-#title = r'Pressure Error'
-title='Nonadaptive Pressure Error'
-lineType = ['k','k--','k-.','k.-']
-lineType = ['k','k--','k-.']
 lineType = ['k','b','r','k','m-.','c:','g']
 markers = ['v','o','s','^','P','*','|']
-"""
-legend= ['BDF3-Stab, m = '+'{0:.3f}'.format(slopel2L20),\
-		'BDF3, m = '+'{0:.3f}'.format(slopel2L203),\
-		'BDF3-4, m = '+'{0:.3f}'.format(slopel2L204)]
-"""
+
 legend= ['BDF3-Stab',\
 		'BDF3',\
 		'FBDF4']
-plotCompareMethods(dt,[l2L20Pressure,l2L20Pressure3,l2L20Pressure4],xLabel,yLabel,title,lineType,legend,markers)
-
-plotCompareMethods(dt,[PMAX2,PMAX3,PMAX4],xLabel,yLabel,title,lineType,legend,markers)
-
-#PRESSURE lINFL2
-#slopePressurelINFL2 = stats.linregress(np.log(dt),np.log(pressurelINFL2))[0]
-#slopePressurelINFL2C = stats.linregress(np.log(dt),np.log(pressurelINFL2C))[0]
-
-#print(slopePressurelINFL2C)
-#xLabel = 'k'
-#title = r'$||p_h - p||_{l^{\infty}L^2}/||p||_{l^{\infty}L^2}$'
-#lineType = ['k','k--']
-#legend= ['AC, m = '+'{0:.3f}'.format(slopePressurelINFL2), 'Corrected AC, m = '+'{0:.3f}'.format(slopePressurelINFL2C)]
-#plotCompareMethods(dt,[pressurelINFL2,pressurelINFL2C],xLabel,title,lineType,legend)
+#plotCompareMethods(dt,[l2L20Pressure,l2L20Pressure3,l2L20Pressure4],xLabel,yLabel,title,lineType,legend,markers)
+title='Nonadaptive Velocity Error'
+#plotCompareMethods(dt,[VLAST2,VLAST3,VLAST4],xLabel,yLabel,title,lineType,legend,markers)
+title='Nonadaptive Pressure Error'
+plotCompareMethods(dt,[PLAST2,PLAST3,PLAST4],xLabel,yLabel,title,lineType,legend,markers)
 
 
