@@ -54,6 +54,8 @@ parser.add_argument('--bdforder', help ="The order of the bdf_method", type = in
 
 parser.add_argument('--vo', help ="Which orders to use, such as 2, 23, 3, 34, 234",\
                     type = int,default = 3)
+parser.add_argument('--plot', help ="Plot the solution at the end.",\
+	                action="store_true")
 #----------------------------------- PARSING THE CONSOLE INPUT -------------------------------------
 args = parser.parse_args()
 
@@ -386,17 +388,19 @@ errorfile.write(output)
 errorfile.close()
 
 #
-
-#plt.plot(times,solution[0],marker = "x")
-#plt.plot(times,solution[0],'k')
-#plt.plot(t_data,y_data[:,0])
-#plt.semilogy(times,solution[0])
-#plt.semilogy(t_data,y_data[:,0])
-#plt.plot(times,solution,marker = "x")
-#plt.plot(times,np.ones_like(solution))
-#plt.show()
-#plt.plot(times)
-#plt.show()
+if args.plot:
+#	plt.plot(times,solution[0],marker = "x")
+	plt.plot(times,solution[0],'k')
+#	plt.plot(t_data,y_data[:,0])
+#	plt.semilogy(times,solution[0])
+#	plt.semilogy(t_data,y_data[:,0])
+#	plt.plot(times,solution,marker = "x")
+#	plt.plot(times,np.ones_like(solution))
+	plt.show()
+	plt.plot(times)
+	plt.show()
+	#print('Final Solution = ' + str(solution[0][len(solution[0])-1]))
+print('Final Solution = ' + str(solution[0][len(solution[0])-1]))
 
 print(len(times))
 print(len(times)+numOfFailures)
