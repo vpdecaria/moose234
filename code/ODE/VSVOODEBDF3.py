@@ -42,6 +42,8 @@ parser.add_argument('--constant', help ="Enabling this will disable adaptivity a
 	                action="store_true")
 parser.add_argument('-k','--startingStepSize', help ="The initial step size taken.",\
 	                type =np.float64, default = 0.000001)
+parser.add_argument('-m','--min', help ="Minimum stepsize alloweed",\
+	                type =np.float64, default = 1e-15)
 parser.add_argument('--forcefilter',\
                     help ="Forces the exclusive use of the filter passed to argument f.",\
                     action="store_true")
@@ -56,6 +58,9 @@ parser.add_argument('--vo', help ="Which orders to use, such as 2, 23, 3, 34, 23
                     type = int,default = 3)
 parser.add_argument('--plot', help ="Plot the solution at the end.",\
 	                action="store_true")
+parser.add_argument('-s','--solution', help ="Solution file name.",\
+	                type =str, default = "none" )
+
 #----------------------------------- PARSING THE CONSOLE INPUT -------------------------------------
 args = parser.parse_args()
 
@@ -74,6 +79,12 @@ if(constantStepSize):
 print("Printing to file " + args.output)
 
 tolerance = args.tolerance
+
+if(args.solution == "none"):
+	save_solution = False
+else:
+	save_solution = True
+	solution_filename = args.solution
 
 maxRatio = args.ratio
 
@@ -115,7 +126,7 @@ EstVector = np.ones(3)*1e14
 tempSolutions = ["Intermediate","Filtered","Solution","Values"]
 safetyFactor = 0.9
 numOfFailures = 0
-minStepSize = 1e-15
+minStepSize = args.min
 
 errorfName = args.output
 errorfile = open(errorfName, 'w')
@@ -362,7 +373,7 @@ while (tOld < T):
 
 final_error=L2_error
 if(numerical_data):
-	print('Error')
+	print('Final error at t = ')
 
 	print(t_data[len(t_data)-1])
 	exact_final = np.array([y_data[len(t_data)-1]]).transpose()
@@ -401,7 +412,11 @@ if args.plot:
 	plt.show()
 	#print('Final Solution = ' + str(solution[0][len(solution[0])-1]))
 print('Final Solution = ' + str(solution[0][len(solution[0])-1]))
+print('Final Solution = ' + str(solution[1][len(solution[0])-1]))
 
 print(len(times))
 print(len(times)+numOfFailures)
 
+if(save_solution):
+	np.savetxt("y-" + solution_filename, solution)
+	np.savetxt("t-" + solution_filename, t_data)
