@@ -1,6 +1,6 @@
 import numpy as np
 
-lam = -1e6
+lam = -1e12
 def exact(t):
 	return np.array([np.sin(t)])
 
@@ -13,6 +13,6 @@ def Jf(t,y):
 
 #lam = 0
 
-T = 2*np.pi
+T = 3*np.pi
 
 numerical_data= False

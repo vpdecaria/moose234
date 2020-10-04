@@ -401,7 +401,11 @@ errorfile.close()
 #
 if args.plot:
 #	plt.plot(times,solution[0],marker = "x")
-	plt.plot(times,solution[0],'k')
+	if(len(exact(0)) == 1):
+		plt.plot(times,solution,'k')
+	else:
+		#just first componenet
+		plt.plot(times,solution[0],'k')
 #	plt.plot(t_data,y_data[:,0])
 #	plt.semilogy(times,solution[0])
 #	plt.semilogy(t_data,y_data[:,0])
@@ -411,8 +415,8 @@ if args.plot:
 	plt.plot(times)
 	plt.show()
 	#print('Final Solution = ' + str(solution[0][len(solution[0])-1]))
-print('Final Solution = ' + str(solution[0][len(solution[0])-1]))
-print('Final Solution = ' + str(solution[1][len(solution[0])-1]))
+#print('Final Solution = ' + str(solution[0][len(solution[0])-1]))
+#print('Final Solution = ' + str(solution[1][len(solution[0])-1]))
 
 print(len(times))
 print(len(times)+numOfFailures)
