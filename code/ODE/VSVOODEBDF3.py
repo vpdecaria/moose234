@@ -231,8 +231,29 @@ while (tOld < T):
 
 	maxIter = 50
 	y_3 = newton.newton(u_n[total_num_steps],F,J_newton,newton_tol,maxIter)
+
+	#-------------------------- ADAPTIVE BDF2 BASED METHODS ----------------------------------------
+	if (bdf_order == 2):
+		if (orders_to_use == 2 or orders_to_use == 23):
+			filter_coefficients = eta*differences[3]
+
+			time_filter = (filter_coefficients[total_num_steps]*y_3  \
+				+ np.sum(filter_coefficients[i-1]*u_n[i] for i in xrange(1,total_num_times)) )
+
+			#Remember that even though it is subscripted with 4, this is really third order.
+			print(time_filter)
+			EstVector[0] = linalg.norm(time_filter)
+			y_4 = y_3 - time_filter
+
+			if(orders_to_use == 23):
+				print("ERROR : Adaptive strategy for orders_to_use = " + str(orders_to_use) + "\
+					is not implemented.")
+			#Shift solutions around since this code was originally meant for MOOSE234
+
+			y_2 = y_3
+			y_3 = y_4
 	
-	if (bdf_order == 3):
+	elif (bdf_order == 3):
 		#This code can be used wfor any bdf, but not necessarily with vsvo capability
 		if(orders_to_use == 2 or orders_to_use == 23 or orders_to_use == 234):
 			#Use the stabilizing second order filter
